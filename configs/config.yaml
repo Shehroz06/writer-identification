@@ -1,0 +1,23 @@
+# Root Hydra configuration.
+#
+# Composes one config group per implemented module. `corpus` selects which
+# registered corpus scripts/train.py trains on (scripts/corpora_registry.py);
+# it's a no-op for every other Hydra entrypoint sharing this root config
+# (evaluate_*.py, prepare_*.py, inference.py, export_model.py, the API), since
+# none of them reference cfg.corpus -- its default here only exists so those
+# scripts don't have to pass an unused override.
+
+defaults:
+  - preprocessing: default
+  - segmentation: default
+  - datasets: default
+  - feature_extraction: default
+  - models: default
+  - embeddings: default
+  - training: default
+  - evaluation: default
+  - corpus: writer_id
+  - _self_
+
+project_name: writer-identification
+seed: 42

@@ -1,0 +1,5 @@
+# Selects the writer-identification corpus for scripts/train.py
+# (registered loader: scripts/corpora_registry.py:_load_writer_id_rows).
+name: writer_id
+default_checkpoint_dir: models/checkpoints/writer_id
+display_name: "writer-identification training corpus"

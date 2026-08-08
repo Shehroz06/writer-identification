@@ -1,0 +1,25 @@
+# Default segmentation configuration. Keys mirror
+# handwriting_engine.segmentation.config.SegmentationConfig field-for-field;
+# load via OmegaConf and validate with SegmentationConfig.model_validate(...).
+
+components:
+  min_area: 4
+
+lines:
+  smoothing_sigma: 3.0
+  valley_prominence_ratio: 0.15
+
+words:
+  min_gap_samples_for_otsu: 4
+  fallback_gap_multiplier: 2.5
+
+characters:
+  fragment_area_ratio: 0.15
+  merge_max_horizontal_gap_ratio: 0.5
+  wide_component_width_ratio: 1.6
+  valley_prominence_ratio: 0.2
+  smoothing_kernel: 3
+
+regions:
+  stroke_width_cv_threshold: 0.35
+  min_skeleton_points: 10

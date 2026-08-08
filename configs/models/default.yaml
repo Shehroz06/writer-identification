@@ -1,0 +1,10 @@
+# Default backbone configuration. Keys mirror
+# handwriting_engine.models.config.BackboneConfig field-for-field; load via
+# OmegaConf and validate with BackboneConfig.model_validate(...).
+
+checkpoint: facebook/dinov2-small
+frozen: true
+unfreeze_last_blocks: 0
+image_size: 224
+image_mean: [0.485, 0.456, 0.406]
+image_std: [0.229, 0.224, 0.225]

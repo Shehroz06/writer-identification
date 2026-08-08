@@ -1,0 +1,6 @@
+# Default evaluation configuration. Keys mirror
+# handwriting_engine.evaluation.config.EvaluationConfig field-for-field; load
+# via OmegaConf and validate with EvaluationConfig.model_validate(...).
+
+identification:
+  top_k_values: [1, 5, 10]

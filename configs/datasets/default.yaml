@@ -1,0 +1,17 @@
+# Default datasets configuration. Keys mirror
+# corpora.config.DatasetsConfig field-for-field; load via
+# OmegaConf and validate with DatasetsConfig.model_validate(...).
+
+iam:
+  hub_id: Teklia/IAM-line
+  cache_dir: data/raw/iam
+
+cvl:
+  root_dir: data/raw/cvl
+
+sigcomp2011:
+  hub_id: 1aurent/ICDAR-2011
+  cache_dir: data/raw/sigcomp2011
+
+iam_histdb:
+  root_dir: data/raw/iam_histdb

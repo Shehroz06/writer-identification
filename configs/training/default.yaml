@@ -1,0 +1,44 @@
+# Default training configuration. Keys mirror
+# handwriting_engine.training.config.TrainingConfig field-for-field; load via
+# OmegaConf and validate with TrainingConfig.model_validate(...).
+
+num_epochs: 10
+
+loss:
+  method: circle
+  circle:
+    margin: 0.25
+    scale: 256.0
+  triplet:
+    margin: 0.3
+
+sampler:
+  num_identities_per_batch: 8
+  num_samples_per_identity: 4
+  batches_per_epoch: 100
+
+optimizer:
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  backbone_learning_rate: null
+
+scheduler:
+  enabled: false
+  warmup_epochs: 1
+
+wandb:
+  mode: disabled
+  project: handwriting-engine
+
+dataloader:
+  num_workers: 0
+  pin_memory: false
+  persistent_workers: false
+
+device: auto
+use_amp: false
+
+checkpoint_dir: null
+resume: true
+checkpoint_every_n_epochs: 1
+init_checkpoint: null

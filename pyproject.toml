@@ -1,0 +1,71 @@
+[project]
+name = "writer-identification"
+version = "0.1.0"
+description = "Writer identification child project, built on the handwriting-engine core."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Absolute local path for now -- swap to the published source once
+    # handwriting-engine is pushed to GitHub (see README.md "Depending on
+    # the engine"). Must be absolute + percent-encoded: uv/hatchling doesn't
+    # reliably resolve a relative `file:` reference across the wheel-metadata
+    # parsing step. Update this path if you rename or relocate that repo.
+    "handwriting-engine @ file:///home/shehroz/Documents/VS%20Code/Projects/Handwriting%20detection",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6",
+    "black>=24.8",
+    "mypy>=1.11",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/writer_identification"]
+
+[tool.hatch.metadata]
+# Required for the `handwriting-engine @ file:...` direct-reference dependency
+# above -- hatchling blocks direct references (file:/git+) by default.
+allow-direct-references = true
+
+# Same CPU-default / CUDA-opt-in mechanism as the engine repo -- uv's source
+# overrides are per-project, not inherited transitively from a dependency, so
+# this needs to be repeated here. On a CUDA machine:
+#     export UV_NO_SOURCES_PACKAGE="torch torchvision"
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+explicit_package_bases = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# "corpora/" and "scripts/" are repo-root packages, not part of the installed
+# "writer_identification" wheel -- same convention as the engine repo.
+pythonpath = ["."]

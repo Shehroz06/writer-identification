@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+.python-version
+
+# Testing / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Data & model artifacts -- never committed
+/data/*
+!/data/README.md
+/models/checkpoints/
+/deployment/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+
+# Experiment tracking
+wandb/
+mlruns/
+
+# Environment / secrets
+.env
+.env.*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Hydra run outputs
+outputs/
+multirun/

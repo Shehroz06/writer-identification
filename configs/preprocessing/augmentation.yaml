@@ -1,0 +1,16 @@
+# Training-time augmentation configuration. Mirrors
+# handwriting_engine.preprocessing.config.AugmentationConfig field-for-field.
+# Kept separate from default.yaml since augmentation is applied only when
+# loading training batches (Phase 4+), never as part of deterministic
+# preprocessing.
+
+enabled: true
+rotate_limit_deg: 5.0
+elastic_alpha: 30.0
+elastic_sigma: 5.0
+grid_distortion_steps: 5
+grid_distortion_limit: 0.3
+optical_distortion_limit: 0.2
+brightness_contrast_limit: 0.2
+gaussian_noise_std_range: [0.02, 0.08]
+probability: 0.5
