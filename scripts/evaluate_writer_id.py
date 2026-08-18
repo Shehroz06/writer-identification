@@ -23,6 +23,7 @@ Usage: uv run python -m scripts.evaluate_writer_id
 
 from __future__ import annotations
 
+import logging
 import random
 from pathlib import Path
 
@@ -39,6 +40,8 @@ from omegaconf import DictConfig, OmegaConf
 from PIL.Image import Image as PILImage
 
 from scripts._common import embed_all, encode_labels
+
+logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CVL_DIR = REPO_ROOT / "data" / "raw" / "cvl"
@@ -93,8 +96,8 @@ def main(cfg: DictConfig) -> None:
     images, writer_ids = _load_test_rows()
     labels, mapping = encode_labels(writer_ids)
     query_indices, gallery_indices = _split_query_gallery(writer_ids)
-    print(f"device: {device}")
-    print(
+    logger.info(f"device: {device}")
+    logger.info(
         f"Held-out test corpus: {len(images)} images, {len(mapping)} writers, "
         f"{len(query_indices)} queries, {len(gallery_indices)} gallery entries"
     )
@@ -114,20 +117,22 @@ def main(cfg: DictConfig) -> None:
             gallery_labels,
             identification_config,
         )
-        print(f"\n=== {label} ===")
-        print(f"top-k accuracy: {metrics.top_k_accuracy}")
-        print(f"mAP: {metrics.mean_average_precision:.4f}")
+        logger.info(f"=== {label} ===")
+        logger.info(f"top-k accuracy: {metrics.top_k_accuracy}")
+        logger.info(f"mAP: {metrics.mean_average_precision:.4f}")
 
-    baseline_model = EmbeddingModel(embedding_config).to(device)
-    baseline_model.eval()
-    _evaluate(baseline_model, "Baseline: frozen/untrained DINOv2 embeddings")
+    if not cfg.skip_baseline:
+        baseline_model = EmbeddingModel(embedding_config).to(device)
+        baseline_model.eval()
+        _evaluate(baseline_model, "Baseline: frozen/untrained DINOv2 embeddings")
 
-    if not CHECKPOINT_PATH.exists():
-        raise SystemExit(f"No trained checkpoint at {CHECKPOINT_PATH}; run training first.")
+    checkpoint_path = Path(cfg.checkpoint_path) if cfg.checkpoint_path else CHECKPOINT_PATH
+    if not checkpoint_path.exists():
+        raise SystemExit(f"No trained checkpoint at {checkpoint_path}; run training first.")
     trained_model = EmbeddingModel(embedding_config).to(device)
-    load_checkpoint(trained_model, CHECKPOINT_PATH, map_location=str(device))
+    load_checkpoint(trained_model, checkpoint_path, map_location=str(device))
     trained_model.eval()
-    _evaluate(trained_model, "Trained: Circle-Loss fine-tuned embeddings")
+    _evaluate(trained_model, f"Trained: Circle-Loss fine-tuned embeddings ({checkpoint_path.name})")
 
 
 if __name__ == "__main__":

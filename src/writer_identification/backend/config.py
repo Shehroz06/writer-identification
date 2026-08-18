@@ -14,7 +14,17 @@ class IdentificationAppConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    preprocessing: PreprocessingConfig = PreprocessingConfig()
+    preprocessing: PreprocessingConfig | None = None
+    """Preprocessing pipeline to run before embedding a query/gallery image.
+    `None` (the default) skips the engine's preprocessing pipeline entirely
+    -- raw grayscale straight to the backbone, matching the distribution
+    every training run and evaluation script (`scripts/evaluate_writer_id.py`,
+    `scripts/probe_corpus_separability.py`) actually uses. Passing an
+    explicit `PreprocessingConfig` runs perspective correction/deskew/
+    denoise/CLAHE/binarization/morphology first -- untested against this
+    project's trained checkpoints (a spot check of `scripts/build_gallery.py
+    spot_check=true` under full preprocessing scored 3/8 correct, vs. ~62%
+    top-1 without it -- do not enable without re-validating accuracy)."""
     embedding: EmbeddingConfig = EmbeddingConfig()
     checkpoint_path: Path | None = None
     """Path to this child project's trained checkpoint (e.g.

@@ -2,7 +2,12 @@
 # handwriting_engine.training.config.TrainingConfig field-for-field; load via
 # OmegaConf and validate with TrainingConfig.model_validate(...).
 
-num_epochs: 10
+# 30 epochs x 200 batches/epoch (6000 steps, ~6x the old 10x100 budget) --
+# Stage 2 fine-tuning (embeddings/default.yaml's unfreeze_last_blocks) needs
+# more steps than a head-only run to actually move the unfrozen blocks.
+# Sized for a GPU run (Colab); override downward for CPU dev iteration, e.g.
+# training.num_epochs=3 training.sampler.batches_per_epoch=20.
+num_epochs: 30
 
 loss:
   method: circle
@@ -15,7 +20,7 @@ loss:
 sampler:
   num_identities_per_batch: 8
   num_samples_per_identity: 4
-  batches_per_epoch: 100
+  batches_per_epoch: 200
 
 optimizer:
   learning_rate: 1.0e-4
@@ -23,8 +28,12 @@ optimizer:
   backbone_learning_rate: null
 
 scheduler:
-  enabled: false
-  warmup_epochs: 1
+  # Warmup + cosine decay -- standard practice once a pretrained backbone is
+  # partially unfrozen (see SchedulerConfig's docstring); a true no-op when
+  # unfreeze_last_blocks=0, so this is safe even if Stage 2 gets turned back
+  # off later.
+  enabled: true
+  warmup_epochs: 2
 
 wandb:
   mode: disabled
@@ -36,7 +45,9 @@ dataloader:
   persistent_workers: false
 
 device: auto
-use_amp: false
+# Meaningful speedup on GPU (Colab); a documented no-op on CPU, so this
+# doesn't change local CPU dev runs at all.
+use_amp: true
 
 checkpoint_dir: null
 resume: true

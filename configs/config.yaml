@@ -9,6 +9,14 @@
 
 defaults:
   - preprocessing: default
+  # `preprocessing/augmentation.yaml`, loaded under its own `augmentation`
+  # key (`@augmentation`) rather than merged into `preprocessing` -- that
+  # group already holds the deterministic, inference-time pipeline (which
+  # scripts.train.py's training path never runs -- see
+  # IdentificationAppConfig.preprocessing's docstring); training-only
+  # stochastic augmentation (scripts/_common.py:run_training) is a distinct
+  # concern that happens to reuse the same YAML directory.
+  - preprocessing@augmentation: augmentation
   - segmentation: default
   - datasets: default
   - feature_extraction: default
@@ -21,3 +29,7 @@ defaults:
 
 project_name: writer-identification
 seed: 42
+
+checkpoint_path: null  # scripts.evaluate_writer_id / scripts.probe_corpus_separability / scripts.build_gallery: overrides the default trained checkpoint to evaluate/embed with
+skip_baseline: false  # scripts.evaluate_writer_id / scripts.probe_corpus_separability: skip the untrained-DINOv2 baseline pass (it never changes run to run)
+spot_check: false  # scripts.build_gallery: run the cheap few-writer correctness check instead of the full gallery build

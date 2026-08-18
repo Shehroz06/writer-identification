@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Writer Identification</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f8;
+    --panel: #ffffff;
+    --border: #d9d9de;
+    --text: #1a1a1e;
+    --muted: #6b6b73;
+    --accent: #2f6fed;
+    --accent-text: #ffffff;
+    --error: #c0392b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16161a;
+      --panel: #1f1f24;
+      --border: #34343c;
+      --text: #eaeaee;
+      --muted: #9a9aa2;
+      --accent: #5b8def;
+      --accent-text: #0d1117;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 2rem 1rem 4rem;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    margin-bottom: 0.25rem;
+  }
+  p.subtitle {
+    text-align: center;
+    color: var(--muted);
+    margin-top: 0;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  @media (min-width: 760px) {
+    .layout { grid-template-columns: 1fr 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .panel h2 {
+    margin-top: 0;
+    font-size: 1.05rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0.75rem 0 0.25rem;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  .dropzone {
+    margin-top: 0.25rem;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .dropzone.dragover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .dropzone input[type="file"] { display: none; }
+  .filelist {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    word-break: break-all;
+  }
+  button {
+    margin-top: 1rem;
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .result {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+  .result.error { color: var(--error); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.35rem 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 500; }
+  tr:first-child td { font-weight: 600; }
+</style>
+</head>
+<body>
+  <h1>Writer Identification</h1>
+  <p class="subtitle">Enroll a writer's samples, then identify a new sample against the gallery.</p>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>Enroll</h2>
+      <label for="enroll-writer-id">Writer ID</label>
+      <input type="text" id="enroll-writer-id" placeholder="e.g. shehroz" />
+
+      <label>Sample images (one word/line each, not a full page)</label>
+      <div class="dropzone" id="enroll-dropzone">
+        Click or drop image files here
+        <input type="file" id="enroll-files" accept="image/*" multiple />
+      </div>
+      <div class="filelist" id="enroll-filelist"></div>
+
+      <button id="enroll-submit">Enroll</button>
+      <div class="result" id="enroll-result"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Identify</h2>
+      <label>Sample image (one word/line, not a full page)</label>
+      <div class="dropzone" id="identify-dropzone">
+        Click or drop an image file here
+        <input type="file" id="identify-file" accept="image/*" />
+      </div>
+      <div class="filelist" id="identify-filelist"></div>
+
+      <label for="identify-topk">Top K</label>
+      <input type="number" id="identify-topk" value="5" min="1" max="50" />
+
+      <button id="identify-submit">Identify</button>
+      <div class="result" id="identify-result"></div>
+    </section>
+  </div>
+
+<script>
+  function setupDropzone(zoneEl, inputEl, onChange) {
+    zoneEl.addEventListener("click", () => inputEl.click());
+    inputEl.addEventListener("change", () => onChange(inputEl.files));
+    ["dragenter", "dragover"].forEach((evt) =>
+      zoneEl.addEventListener(evt, (e) => {
+        e.preventDefault();
+        zoneEl.classList.add("dragover");
+      })
+    );
+    ["dragleave", "drop"].forEach((evt) =>
+      zoneEl.addEventListener(evt, (e) => {
+        e.preventDefault();
+        zoneEl.classList.remove("dragover");
+      })
+    );
+    zoneEl.addEventListener("drop", (e) => {
+      inputEl.files = e.dataTransfer.files;
+      onChange(inputEl.files);
+    });
+  }
+
+  function listNames(fileListEl, files) {
+    fileListEl.textContent = files.length
+      ? Array.from(files).map((f) => f.name).join(", ")
+      : "";
+  }
+
+  // --- Enroll ---
+  const enrollDropzone = document.getElementById("enroll-dropzone");
+  const enrollFiles = document.getElementById("enroll-files");
+  const enrollFilelist = document.getElementById("enroll-filelist");
+  const enrollResult = document.getElementById("enroll-result");
+  const enrollSubmit = document.getElementById("enroll-submit");
+
+  setupDropzone(enrollDropzone, enrollFiles, (files) => listNames(enrollFilelist, files));
+
+  enrollSubmit.addEventListener("click", async () => {
+    const writerId = document.getElementById("enroll-writer-id").value.trim();
+    const files = enrollFiles.files;
+    enrollResult.className = "result";
+    if (!writerId) {
+      enrollResult.className = "result error";
+      enrollResult.textContent = "Writer ID is required.";
+      return;
+    }
+    if (!files.length) {
+      enrollResult.className = "result error";
+      enrollResult.textContent = "Add at least one image.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("writer_id", writerId);
+    Array.from(files).forEach((file) => formData.append("files", file));
+
+    enrollSubmit.disabled = true;
+    enrollResult.textContent = "Enrolling...";
+    try {
+      const response = await fetch("/enroll", { method: "POST", body: formData });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "Enroll failed.");
+      enrollResult.textContent =
+        `Enrolled ${body.samples_added} sample(s) for "${body.writer_id}". ` +
+        `Gallery now has ${body.gallery_size} entries.`;
+    } catch (err) {
+      enrollResult.className = "result error";
+      enrollResult.textContent = err.message;
+    } finally {
+      enrollSubmit.disabled = false;
+    }
+  });
+
+  // --- Identify ---
+  const identifyDropzone = document.getElementById("identify-dropzone");
+  const identifyFile = document.getElementById("identify-file");
+  const identifyFilelist = document.getElementById("identify-filelist");
+  const identifyResult = document.getElementById("identify-result");
+  const identifySubmit = document.getElementById("identify-submit");
+
+  setupDropzone(identifyDropzone, identifyFile, (files) => listNames(identifyFilelist, files));
+
+  identifySubmit.addEventListener("click", async () => {
+    const files = identifyFile.files;
+    const topK = document.getElementById("identify-topk").value || 5;
+    identifyResult.className = "result";
+    if (!files.length) {
+      identifyResult.className = "result error";
+      identifyResult.textContent = "Add an image.";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", files[0]);
+
+    identifySubmit.disabled = true;
+    identifyResult.textContent = "Identifying...";
+    try {
+      const response = await fetch(`/identify?top_k=${encodeURIComponent(topK)}`, {
+        method: "POST",
+        body: formData,
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "Identify failed.");
+      if (!body.matches.length) {
+        identifyResult.textContent = "No matches (empty gallery).";
+        return;
+      }
+      const rows = body.matches
+        .map(
+          (m, i) =>
+            `<tr><td>${i + 1}</td><td>${m.label}</td><td>${m.similarity.toFixed(4)}</td></tr>`
+        )
+        .join("");
+      identifyResult.innerHTML =
+        `<table><thead><tr><th>#</th><th>Writer</th><th>Similarity</th></tr></thead>` +
+        `<tbody>${rows}</tbody></table>`;
+    } catch (err) {
+      identifyResult.className = "result error";
+      identifyResult.textContent = err.message;
+    } finally {
+      identifySubmit.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

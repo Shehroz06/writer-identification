@@ -5,12 +5,17 @@ description = "Writer identification child project, built on the handwriting-eng
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    # Absolute local path for now -- swap to the published source once
-    # handwriting-engine is pushed to GitHub (see README.md "Depending on
-    # the engine"). Must be absolute + percent-encoded: uv/hatchling doesn't
-    # reliably resolve a relative `file:` reference across the wheel-metadata
-    # parsing step. Update this path if you rename or relocate that repo.
-    "handwriting-engine @ file:///home/shehroz/Documents/VS%20Code/Projects/Handwriting%20detection",
+    # Pinned to the v0.1.0 tag (not `main`) for reproducible builds -- both
+    # currently point at the same commit. Requires SSH access to the private
+    # engine repo (git@github.com:Shehroz06/handwriting-detection-engine);
+    # Docker builds forward the host's SSH key via BuildKit (see Dockerfile).
+    "handwriting-engine @ git+ssh://git@github.com/Shehroz06/handwriting-detection-engine.git@v0.1.0",
+    # Used directly by corpora/{cvl,iam,historical,_common}.py (load_dataset/
+    # Dataset/DatasetDict) -- a real, direct import that was never declared
+    # here; only ever worked locally because something transitively pulled
+    # it in and it happened to still be on disk. Pin matches what was
+    # already resolving before this was made explicit.
+    "datasets>=3.0",
 ]
 
 [dependency-groups]

@@ -11,6 +11,7 @@ against a set of known identities" can reuse this, not just writer ID.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Self
 
 import numpy as np
@@ -18,6 +19,7 @@ import torch
 from handwriting_engine.adapters.base import EngineAdapter
 from handwriting_engine.adapters.embedding import embed_image
 from handwriting_engine.embeddings.model import EmbeddingModel
+from handwriting_engine.models.backbone import prepare_pixel_values
 from handwriting_engine.training.checkpoint import load_checkpoint
 from numpy.typing import NDArray
 
@@ -69,8 +71,20 @@ class IdentificationAdapter(EngineAdapter[IdentificationAppConfig]):
         return cls(config)
 
     def embed(self, image: NDArray[np.uint8]) -> torch.Tensor:
-        """Preprocess and embed a single image -- usable standalone (e.g. to
-        build a gallery) even without a gallery configured."""
+        """Embed a single image -- usable standalone (e.g. to build a
+        gallery) even without a gallery configured.
+
+        With `config.preprocessing` at its default of `None`, skips the
+        engine's preprocessing pipeline entirely (raw grayscale straight to
+        the backbone), matching the distribution training/evaluation
+        actually use. Only runs preprocessing if a `PreprocessingConfig` is
+        explicitly set -- see `IdentificationAppConfig.preprocessing`'s
+        docstring for why that path is currently unvalidated."""
+        if self._config.preprocessing is None:
+            pixel_values = prepare_pixel_values([image], self._config.embedding.backbone)
+            with torch.no_grad():
+                embedding: torch.Tensor = self._embedding_model(pixel_values)[0]
+            return embedding
         return embed_image(
             self._embedding_model,
             image,
@@ -97,3 +111,36 @@ class IdentificationAdapter(EngineAdapter[IdentificationAppConfig]):
             )
             for index in ranked_indices
         ]
+
+    @property
+    def gallery_size(self) -> int:
+        return 0 if self._gallery_embeddings is None else len(self._gallery_embeddings)
+
+    def enroll(self, image: NDArray[np.uint8], writer_id: str) -> None:
+        """Embed `image` (same code path as querying, so enrolled samples
+        and future queries live in the same distribution) and append it to
+        the in-memory gallery, initializing an empty gallery first if none
+        was configured."""
+        embedding = self.embed(image).numpy().astype(np.float64)
+        if self._gallery_embeddings is None or self._gallery_labels is None:
+            self._gallery_embeddings = embedding.reshape(1, -1)
+            self._gallery_labels = np.array([writer_id])
+        else:
+            self._gallery_embeddings = np.vstack([self._gallery_embeddings, embedding])
+            self._gallery_labels = np.append(self._gallery_labels, writer_id)
+
+    def save_gallery(self, path: Path) -> None:
+        """Write the current in-memory gallery to `path`, using the same
+        `embeddings`/`labels` `.npz` convention `scripts/build_gallery.py`
+        uses -- byte-for-byte compatible with the existing format."""
+        embeddings = (
+            self._gallery_embeddings
+            if self._gallery_embeddings is not None
+            else np.empty((0, 0), dtype=np.float64)
+        )
+        labels = (
+            self._gallery_labels
+            if self._gallery_labels is not None
+            else np.empty((0,), dtype=str)
+        )
+        np.savez(path, embeddings=embeddings, labels=labels)

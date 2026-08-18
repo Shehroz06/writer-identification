@@ -15,12 +15,14 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
 
+import albumentations as A
 import numpy as np
 import torch
 from handwriting_engine.embeddings.config import EmbeddingConfig
 from handwriting_engine.embeddings.model import EmbeddingModel
 from handwriting_engine.models.backbone import prepare_pixel_values
 from handwriting_engine.models.config import BackboneConfig
+from handwriting_engine.preprocessing import AugmentationConfig, build_augmentation_pipeline
 from handwriting_engine.training.config import TrainingConfig
 from handwriting_engine.training.loop import EpochResult, train
 from handwriting_engine.training.sampler import PKSampler
@@ -34,17 +36,31 @@ from torch.utils.data import DataLoader, Dataset
 
 class ImageLabelDataset(Dataset[tuple[NDArray[np.uint8], int]]):
     """Wraps parallel sequences of PIL images and integer identity labels
-    (typically pooled from more than one combined HF dataset)."""
+    (typically pooled from more than one combined HF dataset).
 
-    def __init__(self, images: Sequence[PILImage], labels: Sequence[int]) -> None:
+    `augment`, when given, is applied per-sample after grayscale conversion
+    -- training-only stochastic augmentation (rotation/elastic/grid/optical
+    distortion, brightness/contrast/noise jitter), never used by the
+    eval/gallery-build paths, which construct this dataset with `augment=
+    None` (the default) or don't use it at all."""
+
+    def __init__(
+        self,
+        images: Sequence[PILImage],
+        labels: Sequence[int],
+        augment: A.Compose | None = None,
+    ) -> None:
         self._images = images
         self._labels = labels
+        self._augment = augment
 
     def __len__(self) -> int:
         return len(self._labels)
 
     def __getitem__(self, index: int) -> tuple[NDArray[np.uint8], int]:
         array = np.array(self._images[index].convert("L"), dtype=np.uint8)
+        if self._augment is not None:
+            array = self._augment(image=array)["image"]
         return array, self._labels[index]
 
 
@@ -185,7 +201,12 @@ def run_training(
     embedding_config = EmbeddingConfig.model_validate(
         OmegaConf.to_container(cfg.embeddings, resolve=True)
     )
-    dataset = ImageLabelDataset(images, labels)
+    augmentation_config = AugmentationConfig.model_validate(
+        OmegaConf.to_container(cfg.augmentation, resolve=True)
+    )
+    dataset = ImageLabelDataset(
+        images, labels, augment=build_augmentation_pipeline(augmentation_config)
+    )
     sampler = PKSampler(
         labels,
         num_identities_per_batch=training_config.sampler.num_identities_per_batch,
