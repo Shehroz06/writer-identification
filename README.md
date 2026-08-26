@@ -1,6 +1,6 @@
 # Writer Identification
 
-A child project built on the [Handwriting Analysis Engine](../handwriting-detection-engine) —
+A downstream project built on the [Handwriting Analysis Engine](https://github.com/Shehroz06/handwriting-detection-engine) —
 ranks a handwriting sample against a gallery of known writers, via a
 DINOv2-embedding + Circle-Loss model trained on CVL + Firemaker/CERUG.
 
@@ -9,17 +9,15 @@ It does not modify the core engine — it only depends on it.
 
 ## Depending on the engine
 
-`pyproject.toml` points at the engine's published GitHub repo, pinned to a
-tag for reproducible builds:
+`pyproject.toml` points at the engine's public GitHub repo over plain HTTPS,
+pinned to a tag for reproducible builds:
 
 ```toml
-dependencies = ["handwriting-engine @ git+ssh://git@github.com/Shehroz06/handwriting-detection-engine.git@v0.1.0"]
+dependencies = ["handwriting-engine @ git+https://github.com/Shehroz06/handwriting-detection-engine.git@v0.1.0"]
 ```
 
-The repo is private, so this requires SSH access
-(`git@github.com:Shehroz06/handwriting-detection-engine`) — `uv sync` uses
-your local SSH key directly; the Docker build forwards it via BuildKit
-(see "Run the service" below).
+No credentials or SSH setup needed — `uv sync` (below) fetches it like any
+other dependency.
 
 ## Setup
 
@@ -30,7 +28,10 @@ uv run pytest   # confirms the install works, no network or checkpoint required
 
 ## Get the trained checkpoint
 
-Checkpoints aren't committed to git (too large). Place the trained checkpoint at:
+Checkpoints aren't committed to git (too large). Download the trained
+checkpoint from
+[Google Drive](https://drive.google.com/drive/folders/1QtA1619sCCNgFCDzmtkeHslmVcE9lQ0T?usp=sharing)
+and place it at:
 
 ```
 models/checkpoints/writer_id/
@@ -93,18 +94,16 @@ curl http://localhost:8000/health
 
 curl -F "file=@data/raw/cvl/test/cvl_0216_3.png" "http://localhost:8000/identify?top_k=3"
 
-curl -F "writer_id=shehroz" -F "files=@me1.png" -F "files=@me2.png" http://localhost:8000/enroll
+curl -F "writer_id=alice" -F "files=@me1.png" -F "files=@me2.png" http://localhost:8000/enroll
 ```
 
 ### Via Docker
 
 The checkpoint/gallery are volume-mounted, not baked into the image, so
-swapping in a retrained model or rebuilt gallery never requires a rebuild.
-Building needs SSH access to the private engine repo — BuildKit forwards
-your local SSH key for the duration of the build, never into an image layer:
+swapping in a retrained model or rebuilt gallery never requires a rebuild:
 
 ```bash
-docker build --ssh default -t writer-identification-api .
+docker build -t writer-identification-api .
 docker run -d -p 8000:8000 \
   -v "$(pwd)/models/checkpoints/writer_id:/models/writer_id:ro" \
   --name wid writer-identification-api
@@ -125,7 +124,7 @@ docker stop wid && docker rm wid
 ### Enroll writers offline (no server needed)
 
 ```bash
-uv run python -m scripts.enroll_writer --writer-id shehroz path/to/sample1.png path/to/sample2.png
+uv run python -m scripts.enroll_writer --writer-id alice path/to/sample1.png path/to/sample2.png
 ```
 
 Both enrollment paths mutate `models/checkpoints/writer_id/gallery.npz` in
@@ -158,9 +157,9 @@ DINOv2 features, `configs/config.yaml` wires up
 (rotation/elastic/grid/optical distortion, brightness/contrast/noise) into
 the training path for the first time, and `configs/training/default.yaml`
 bumps the budget to 30 epochs x 200 batches/epoch with a warmup+cosine-decay
-scheduler and AMP — see `docs/RESULTS.md` for why (the 62% top-1 baseline was
-trained with the backbone 100% frozen and zero augmentation). Sized for a GPU
-run; override downward for CPU dev iteration, e.g.
+scheduler and AMP (the 62% top-1 baseline this improves on was trained with
+the backbone 100% frozen and zero augmentation). Sized for a GPU run;
+override downward for CPU dev iteration, e.g.
 `training.num_epochs=3 training.sampler.batches_per_epoch=20`.
 
 After training finishes, replace the local `models/checkpoints/writer_id/`
@@ -170,7 +169,7 @@ with the run's output (`best_model.pt`/`model.pt`/`training_state.pt`/
 ```bash
 uv run python -m scripts.build_gallery spot_check=true   # cheap sanity check first
 uv run python -m scripts.build_gallery                   # full gallery rebuild
-uv run python -m scripts.evaluate_writer_id               # record the new top-1/mAP in docs/RESULTS.md
+uv run python -m scripts.evaluate_writer_id
 ```
 
 ## Project structure

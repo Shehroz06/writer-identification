@@ -1,4 +1,4 @@
-"""Writer identification: a child project built on the shared engine --
+"""Writer identification: a downstream project built on the shared engine --
 composes preprocessing and the embedding model with a nearest-neighbor
 gallery lookup into a single `.identify(image)` call, with no changes to the
 engine itself.

@@ -1,11 +1,11 @@
 """Registry of loader functions for `scripts/train.py`'s `corpus=<name>` selection.
 
-This child project (writer identification) only registers its own corpus.
+This downstream project (writer identification) only registers its own corpus.
 Adding another one means writing a loader function here and a matching
 `configs/corpus/<name>.yaml` file -- not a new training script.
 
 Not part of `handwriting_engine` -- a standalone training-glue module in this
-child project, consuming the engine as a dependency.
+downstream project, consuming the engine as a dependency.
 """
 
 from __future__ import annotations

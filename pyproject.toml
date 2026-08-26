@@ -1,15 +1,14 @@
 [project]
 name = "writer-identification"
 version = "0.1.0"
-description = "Writer identification child project, built on the handwriting-engine core."
+description = "Writer identification downstream project, built on the handwriting-engine core."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     # Pinned to the v0.1.0 tag (not `main`) for reproducible builds -- both
-    # currently point at the same commit. Requires SSH access to the private
-    # engine repo (git@github.com:Shehroz06/handwriting-detection-engine);
-    # Docker builds forward the host's SSH key via BuildKit (see Dockerfile).
-    "handwriting-engine @ git+ssh://git@github.com/Shehroz06/handwriting-detection-engine.git@v0.1.0",
+    # currently point at the same commit. Public repo, plain HTTPS -- no
+    # credentials or SSH setup needed to install this project.
+    "handwriting-engine @ git+https://github.com/Shehroz06/handwriting-detection-engine.git@v0.1.0",
     # Used directly by corpora/{cvl,iam,historical,_common}.py (load_dataset/
     # Dataset/DatasetDict) -- a real, direct import that was never declared
     # here; only ever worked locally because something transitively pulled

@@ -636,7 +636,7 @@ wheels = [
 [[package]]
 name = "handwriting-engine"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/Shehroz06/handwriting-detection-engine.git?rev=v0.1.0#850bcf7762a097543a94bef980a4efb67618c21a" }
+source = { git = "https://github.com/Shehroz06/handwriting-detection-engine.git?rev=v0.1.0#850bcf7762a097543a94bef980a4efb67618c21a" }
 dependencies = [
     { name = "albumentations" },
     { name = "fastapi" },
@@ -3397,7 +3397,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "datasets", specifier = ">=3.0" },
-    { name = "handwriting-engine", git = "ssh://git@github.com/Shehroz06/handwriting-detection-engine.git?rev=v0.1.0" },
+    { name = "handwriting-engine", git = "https://github.com/Shehroz06/handwriting-detection-engine.git?rev=v0.1.0" },
 ]
 
 [package.metadata.requires-dev]

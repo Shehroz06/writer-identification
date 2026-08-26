@@ -44,3 +44,6 @@ mlruns/
 # Hydra run outputs
 outputs/
 multirun/
+
+# Local results notes -- not tracked
+/docs/

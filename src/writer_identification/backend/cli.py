@@ -1,5 +1,5 @@
-"""Command-line demo for the writer-identification adapter, using this child
-project's own trained checkpoint and gallery by default.
+"""Command-line demo for the writer-identification adapter, using this
+downstream project's own trained checkpoint and gallery by default.
 
 Usage::
 

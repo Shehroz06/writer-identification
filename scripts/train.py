@@ -5,8 +5,8 @@ corpus can be added later without a new script:
     uv run python -m scripts.train corpus=writer_id
 
 This project consumes `handwriting_engine` (the core engine) as a dependency;
-nothing here is engine code -- it's this child project's own training-glue
-script.
+nothing here is engine code -- it's this downstream project's own
+training-glue script.
 
 Every other setting (epochs, batch composition, learning rate, device, dataloader
 workers, checkpoint/resume behavior, ...) comes from configs/training/default.yaml

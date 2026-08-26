@@ -10,7 +10,7 @@ deployed service reads from. Back it up before your first enrollment
 (`cp gallery.npz gallery.npz.bak`) if you want the original recoverable.
 
 Usage:
-    uv run python -m scripts.enroll_writer --writer-id shehroz \\
+    uv run python -m scripts.enroll_writer --writer-id alice \\
         path/to/sample1.png path/to/sample2.png
 """
 

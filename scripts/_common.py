@@ -1,6 +1,6 @@
 """Shared glue for `scripts/train.py`'s generic training entrypoint.
 
-Not engine code -- this child project consumes `handwriting_engine` as a
+Not engine code -- this downstream project consumes `handwriting_engine` as a
 dependency; this module holds the corpus-agnostic dataset-wrapping/collate/
 training-loop-driving logic local to this project, so a new corpus
 (registered in `scripts/corpora_registry.py`) only needs its own loader

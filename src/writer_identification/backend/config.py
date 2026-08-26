@@ -27,7 +27,7 @@ class IdentificationAppConfig(BaseModel):
     top-1 without it -- do not enable without re-validating accuracy)."""
     embedding: EmbeddingConfig = EmbeddingConfig()
     checkpoint_path: Path | None = None
-    """Path to this child project's trained checkpoint (e.g.
+    """Path to this downstream project's trained checkpoint (e.g.
     `models/checkpoints/writer_id/best_model.pt`, written by
     `scripts/train.py corpus=writer_id`). Loaded into a freshly constructed
     `EmbeddingModel` when the adapter builds its own model (i.e. no
